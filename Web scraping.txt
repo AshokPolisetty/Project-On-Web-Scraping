@@ -1,0 +1,60 @@
+import pandas as pd
+import re
+import requests
+from bs4 import BeautifulSoup
+
+NAME=[]
+AGE=[]
+OVA = []
+POT = []
+TEAM_NAME = []
+CONTRACT = []
+VALUE = []
+WAGE = []
+TOTAL_STATS = []
+
+a = [0,60,120,180,240,300,360,420,480,540]
+for i in a:
+      url = f'https://sofifa.com/players?offset={i}'
+      resp = requests.get(url)
+      soup = BeautifulSoup(resp.content, 'lxml')
+      #NAME
+      b = soup.findAll('a',class_='tooltip')
+      for index in range(0,60):
+                name = b[index]
+                NAME.append(re.sub('<.*">|\xa0|18</span>|</div></a>','',str(name)))
+      #AGE
+      for age in soup.findAll('td',class_='col col-ae'):
+                AGE.append(re.sub('<td.*">|</td>','',str(age)))
+      #OVA
+      for ova in soup.findAll('td', class_='col col-oa'):
+                OVA.append(re.sub('<td.*">|</span></td>','',str(ova)))
+      #POT
+      for pot in soup.findAll('td',class_='col col-pt'):
+                POT.append(re.sub('<td.*">|</span></td>','',str(pot)))
+      #TEAM_NAME
+      c = soup.findAll('td', class_='col-name') 
+      for index in range(1,120,2):
+               team_name=c[index]
+               TEAM_NAME.append(re.sub('<td.*">|<a.*/">|\n|<div.*">|<img.*"/>|</figure>|a>.*<|</.*>|[0-9]+| ~ |Jun|,|On Loan|<span.*">','',str(team_name)))
+      #CONTRACT
+      for contract in soup.findAll('div', class_='sub'):
+                CONTRACT.append(re.sub('</div>|\n|<.*>','',str(contract)))
+      #VALUE
+      for value in soup.findAll('td', class_='col col-vl'):
+                VALUE.append(re.sub('<.*€|M|K|</td>','',str(value)))
+      #WAGE
+      for wage in soup.findAll('td',class_='col col-wg'):
+                WAGE.append(re.sub('<.*€|K|</td>','',str(wage)))
+      #TOTAL_STATS
+      for total_stats in soup.findAll('td', class_='col col-tt'):
+                TOTAL_STATS.append(re.sub('<.*">|</span></td>','',str(total_stats)))
+df = pd.DataFrame({"Name": NAME,"Age": AGE,
+                   "Overall_Rating": OVA,
+                   "Potential": POT,
+                   "Team_Name": TEAM_NAME,
+                   "Contract_Year": CONTRACT,
+                   "Value(M)": VALUE,
+                   "Wage(K)": WAGE,
+                   "Total_Stats": TOTAL_STATS})
+df.to_csv('fifa.csv')
